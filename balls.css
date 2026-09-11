@@ -1,0 +1,16 @@
+body{
+    margin:0;
+    overflow:hidden;
+    touch-action:none;
+}
+
+canvas {
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:none;
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
