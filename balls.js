@@ -27,12 +27,49 @@ const lowerBoard = {
     y: 0 + upperBoard.height + board.height
 };
 
+let buttonWidth = lowerBoard.width * 0.25;
+let buttonHeight = lowerBoard.height * 0.3;
+let gap = lowerBoard.width * 0.05;
+let gapY = lowerBoard.height * 0.1;
+const lbButtons = [
+    {
+    text: "NORMAL",
+    width: buttonWidth,
+    height: buttonHeight,
+    x: lowerBoard.x + gap,
+    y: lowerBoard.y + gapY
+},
+    {
+    text: "HARD",
+    width: buttonWidth,
+    height: buttonHeight,
+    x: lowerBoard.x + (2.5 * gap) + buttonWidth,
+    y: lowerBoard.y + gapY
+},
+    {
+    text: "FREE",
+    width: buttonWidth,
+    height: buttonHeight,
+    x: lowerBoard.x + (4 * gap) + (2 * buttonWidth), // make it so the location stays the same after resize
+    y: lowerBoard.y + gapY
+},
+    {
+    text: "QUIT",
+    width: buttonWidth,
+    height: buttonHeight,
+    x: lowerBoard.x + (2.5 * gap) + buttonWidth,
+    y: lowerBoard.y + gapY
+},
+
+]
+
 const colors = {
     bg: "#17101c",
     stroke: "#100c14",
     ball: "#ffff",
     sub: "#e5c7fa",
-    point: "#8d61ab"
+    point: "#8d61ab",
+    button: "#2e1f38"
 }
 
 const background = new Image();
@@ -49,16 +86,23 @@ let lastTime = 0;
 
 let score = 0;
 
+let normal = false;
+let hard = false;
+let timerN = 60;
+let timerH = 30;
+
 function game(time){
 
     requestAnimationFrame(game);
 
-    deltaTime = (time - lastTime) / 1000;
+    deltaTime = Math.min((time - lastTime) / 1000, 0.05);
     lastTime = time;
 
     ballMovement();
     gameLogic();
     draw();
+    //console.log(Math.floor(lastTime / 1000))
+    console.log(normal,hard)
 }
 
 function draw(){
@@ -82,7 +126,7 @@ function draw(){
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `${fontSize}px Germania One`;
-    ctx.fillText(`Score: ${score}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 2))
+    ctx.fillText(`SCORE: ${score}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 2))
     
 
     if(!start){
@@ -90,13 +134,47 @@ function draw(){
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.font = `${fontSize}px Germania One`;
-        ctx.fillText("Click to spawn a ball",board.x + (board.width / 2), board.y + (board.height / 2))
+        ctx.fillText("CLICK TO START",board.x + (board.width / 2), board.y + (board.height / 2))
+
+        if(!normal && !hard){
+            ctx.fillText("MODE: FREE",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
+        }
+        if(normal){
+            ctx.fillText("MODE: NORMAL",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
+        }
+        if(hard){
+            ctx.fillText("MODE: HARD",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
+        }
+
+        for(let button of lbButtons){
+            if(button.text === "QUIT"){
+                continue;
+            }
+
+            ctx.fillStyle = colors.button;
+            ctx.fillRect(button.x,button.y,button.width,button.height);
+            ctx.strokeRect(button.x, button.y, button.width, button.height);
+
+            ctx.fillStyle = colors.sub;
+            ctx.font = `${Math.min(button.width / 2, button.height / 2)}px Germania One`;
+            ctx.fillText(button.text,button.x + button.width / 2,button.y + button.height / 2);
+        }
     }
     if(start){
+
         spawnBall();
         spawnPoint();
 
+        ctx.fillStyle = colors.button;
+        ctx.fillRect(lbButtons[3].x,lbButtons[3].y,lbButtons[3].width,lbButtons[3].height);
+        ctx.strokeRect(lbButtons[3].x, lbButtons[3].y, lbButtons[3].width, lbButtons[3].height);
 
+        ctx.fillStyle = colors.sub;
+        ctx.font = `${Math.min(lbButtons[3].width / 2, lbButtons[3].height / 2)}px Germania One`;
+        ctx.fillText(lbButtons[3].text,lbButtons[3].x + lbButtons[3].width / 2,lbButtons[3].y + lbButtons[3].height / 2);
+
+        ctx.fillText(`W/A/D  |  ↑/←/→ TO MOVE`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 2))
+        ctx.fillText(`ESC TO QUIT`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.25))
     }
 
 }
@@ -166,7 +244,6 @@ function gameLogic(){
         }
 }
 
-//let velocity = 0;
 let gravity = 1700;
 
 let acceleration = 1000;
@@ -189,9 +266,6 @@ function ballMovement(){
     const rightWall = board.x + board.width - border / 2;
 
     if(start){
-
-        //velocity += gravity * deltaTime;
-        //ball.y += velocity * deltaTime;
 
         ball.velocityY += gravity * deltaTime;
         ball.x += ball.velocityX * deltaTime;
@@ -243,35 +317,18 @@ function ballMovement(){
         ball.y = Math.max(board.y + border / 2 + ball.radius, Math.min(board.y + board.height - border / 2 - ball.radius, ball.y));
 
     }
-    //velocity += gravity * dt;
-    //bird.y += velocity * dt;
-    //velocity = strength;
 }
 
-let topSide = {
-    x: 0,
-    y: 0,
-    width: 0 + canvas.width,
-    height: 0 + upperBoard.height + board.height * 0.2
-};
-let downSide = {
-    x: 0,
-    y: 0 + upperBoard.height + board.height * 0.8,
-    width: 0 + canvas.width,
-    height: canvas.height
-};
-let rightSide = {
-    x: board.x + board.width / 2,
-    y: 0 + upperBoard.height + board.height * 0.2,
-    width: canvas.width,
-    height: board.height * 0.6
-};
-let leftSide = {
-    x: 0,
-    y: 0 + upperBoard.height + board.height * 0.2,
-    width: canvas.width / 2,
-    height: board.height * 0.6
-};
+function reset(){
+    score = 0;
+    start = false;
+    ball.x = board.x + (board.width / 2);
+    ball.y = board.y + (board.height / 2);
+    ball.velocityX = 0;
+    ball.velocityY = 0;
+    point.x = Math.random() * (rightWall - leftWall - radius * 1.3 * 2) + leftWall + radius * 1.3;
+    point.y = Math.random() * (downWall - topWall - radius * 1.3 * 2) + topWall + radius * 1.3;
+}
 
 
 canvas.addEventListener("pointerdown", event =>{
@@ -279,46 +336,56 @@ canvas.addEventListener("pointerdown", event =>{
     const mouseX = event.offsetX;
     const mouseY = event.offsetY;
 
-    start = true;
-    spawnPoint();
+    if (
+        mouseX >= board.x &&
+        mouseX <= board.x + board.width &&
+        mouseY >= board.y &&
+        mouseY <= board.y + board.height
+    ){
+        start = true;
+        spawnPoint();
+    }
 
-    if(start){
+    for(let button of lbButtons){
         if (
-            mouseX >= topSide.x &&
-            mouseX <= topSide.x + topSide.width &&
-            mouseY >= topSide.y &&
-            mouseY <= topSide.y + topSide.height
+            mouseX >= button.x &&
+            mouseX <= button.x + button.width &&
+            mouseY >= button.y &&
+            mouseY <= button.y + button.height
         ){
-            keys.up = true;
-        }
+            switch(button.text){
 
-        if (
-            mouseX >= downSide.x &&
-            mouseX <= downSide.x + downSide.width &&
-            mouseY >= downSide.y &&
-            mouseY <= downSide.y + downSide.height
-        ){
-            keys.down = true;
-        }
+                case "QUIT":
+                    if(start === true){
+                        reset();
+                        break;
+                    }
+                    break;
+                case "NORMAL":
+                    if(!start){
+                        normal = true;
+                        hard = false;
+                        break;
+                    }
+                    break;
 
-        if (
-            mouseX >= rightSide.x &&
-            mouseX <= rightSide.x + rightSide.width &&
-            mouseY >= rightSide.y &&
-            mouseY <= rightSide.y + rightSide.height
-        ){
-            keys.right = true;
-        }
+                case "HARD":
+                    if(!start){
+                        normal = false;
+                        hard = true;
+                        break;
+                    }
+                    break;
 
-        if (
-            mouseX >= leftSide.x &&
-            mouseX <= leftSide.x + leftSide.width &&
-            mouseY >= leftSide.y &&
-            mouseY <= leftSide.y + leftSide.height
-        ){
-            keys.left = true;
+                case "FREE":
+                    if(!start){
+                        normal = false;
+                    hard = false;
+                        break;
+                    }
+                    break;
+            }
         }
-        console.log(keys.up,keys.down,keys.right,keys.left)
     }
     
 })
@@ -326,7 +393,6 @@ canvas.addEventListener("pointerdown", event =>{
 canvas.addEventListener("pointerup", event =>{
 
     keys.up = false;
-    keys.down = false;
     keys.right = false;
     keys.left = false;
 
@@ -339,13 +405,14 @@ window.addEventListener("keydown", event =>{
         spawnPoint();
     }
 
+    if(event.key === "Escape"){
+        start = false;
+        reset();
+    }
+
     if(event.key === "ArrowUp" || event.key === "w"){
         keys.up = true;
     }
-
-    if(event.key === "ArrowDown" || event.key === "s"){
-        keys.down = true;
-    } // is it important?
 
     if(event.key === "ArrowLeft" || event.key === "a"){
         keys.left = true;
@@ -362,10 +429,6 @@ window.addEventListener("keyup", event => {
 
     if(event.key === "ArrowUp" || event.key === "w"){
         keys.up = false;
-    }
-
-    if(event.key === "ArrowDown" || event.key === "s"){
-        keys.down = false;
     }
 
     if(event.key === "ArrowLeft" || event.key === "a"){
@@ -451,6 +514,31 @@ window.addEventListener("resize", () => {
     leftSide.y = 0 + upperBoard.height + board.height * 0.2;
     leftSide.width = canvas.width / 2;
     leftSide.height = board.height * 0.6;
+
+    buttonWidth = lowerBoard.width * 0.25;
+    buttonHeight = lowerBoard.height * 0.3;
+    gap = lowerBoard.width * 0.05;
+    gapY = lowerBoard.height * 0.1;
+
+    lbButtons[0].x = lowerBoard.x + gap;
+    lbButtons[0].y = lowerBoard.y + gapY;
+    lbButtons[0].width = buttonWidth;
+    lbButtons[0].height = buttonHeight;
+
+    lbButtons[1].x = lowerBoard.x + (2.5 * gap) + buttonWidth;
+    lbButtons[1].y = lowerBoard.y + gapY;
+    lbButtons[1].width = buttonWidth;
+    lbButtons[1].height = buttonHeight;
+
+    lbButtons[2].x = lowerBoard.x + (4 * gap) + (2 * buttonWidth);
+    lbButtons[2].y = lowerBoard.y + gapY;
+    lbButtons[2].width = buttonWidth;
+    lbButtons[2].height = buttonHeight;
+
+    lbButtons[3].x = lowerBoard.x + (2.5 * gap) + buttonWidth;
+    lbButtons[3].y = lowerBoard.y + gapY;
+    lbButtons[3].width = buttonWidth;
+    lbButtons[3].height = buttonHeight;
 
     draw();
 
