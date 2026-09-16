@@ -50,7 +50,7 @@ const lbButtons = [
     text: "FREE",
     width: buttonWidth,
     height: buttonHeight,
-    x: lowerBoard.x + (4 * gap) + (2 * buttonWidth), // make it so the location stays the same after resize
+    x: lowerBoard.x + (4 * gap) + (2 * buttonWidth),
     y: lowerBoard.y + gapY
 },
     {
@@ -77,19 +77,21 @@ background.src = "images/50863.jpg";
 
 let fontSize = Math.min(board.width / 15, board.height / 15);
 let start = false;
+let lost = false;
+let won = false;
 
 let radius = Math.min (board.width / 50, board.height / 50);
-//let balls = [];
 
 let deltaTime = 0;
 let lastTime = 0;
 
 let score = 0;
+let requiredScore = 50;
 
-let normal = false;
+let normal = true;
 let hard = false;
-let timerN = 60;
-let timerH = 30;
+let timer = 70;
+let startTime = 0;
 
 function game(time){
 
@@ -101,8 +103,6 @@ function game(time){
     ballMovement();
     gameLogic();
     draw();
-    //console.log(Math.floor(lastTime / 1000))
-    console.log(normal,hard)
 }
 
 function draw(){
@@ -130,21 +130,32 @@ function draw(){
     
 
     if(!start){
+
         ctx.fillStyle = colors.sub;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.font = `${fontSize}px Germania One`;
-        ctx.fillText("CLICK TO START",board.x + (board.width / 2), board.y + (board.height / 2))
+
+        if(!won && !lost){
+            ctx.fillText("CLICK TO START",board.x + (board.width / 2), board.y + (board.height / 2))
+        }
 
         if(!normal && !hard){
             ctx.fillText("MODE: FREE",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
+            ctx.font = `${fontSize / 2}px Germania One`;
+            ctx.fillText("NO TIMER, PLAY AS MUCH AS YOU WANT",lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.5));
         }
         if(normal){
             ctx.fillText("MODE: NORMAL",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
+            ctx.font = `${fontSize / 2}px Germania One`;
+            ctx.fillText(`WIN BY GETTING A SCORE OF ${requiredScore} IN ${timer} SECONDS`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.5));
         }
         if(hard){
             ctx.fillText("MODE: HARD",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
-        }
+            ctx.font = `${fontSize / 2}px Germania One`;
+            ctx.fillText(`WIN BY GETTING A SCORE OF ${requiredScore} IN ${timer} SECONDS`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.5));
+            //ctx.fillText(`WATCH OUT FOR OBSTACLES TOO`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.25));
+        }// work on making win mode and lost mode look better plus make hard mode
 
         for(let button of lbButtons){
             if(button.text === "QUIT"){
@@ -175,6 +186,25 @@ function draw(){
 
         ctx.fillText(`W/A/D  |  ↑/←/→ TO MOVE`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 2))
         ctx.fillText(`ESC TO QUIT`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.25))
+
+        if(hard || normal){
+            ctx.fillText(timer,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
+        }
+    }
+
+    if(won){
+        ctx.fillStyle = colors.sub;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `${fontSize}px Germania One`;
+        ctx.fillText("YOU WON",board.x + (board.width / 2), board.y + (board.height / 2));
+    }
+    if(lost){
+        ctx.fillStyle = colors.sub;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `${fontSize}px Germania One`;
+        ctx.fillText("YOU LOST",board.x + (board.width / 2), board.y + (board.height / 2));
     }
 
 }
@@ -242,6 +272,22 @@ function gameLogic(){
 
         score++;
         }
+    
+    if(start && (normal || hard)){
+        let elapsed = (performance.now() - startTime) / 1000;
+        timer = Math.max(0, 70 - Math.floor(elapsed));
+
+        if(timer === 0){
+            lost = true;
+            start = false;
+            reset();
+        }
+        if((normal || hard) && score === requiredScore){
+            won = true;
+            start = false;
+            reset();
+        }
+    }
 }
 
 let gravity = 1700;
@@ -321,6 +367,8 @@ function ballMovement(){
 
 function reset(){
     score = 0;
+    timer = 60;
+    startTime = 0;
     start = false;
     ball.x = board.x + (board.width / 2);
     ball.y = board.y + (board.height / 2);
@@ -343,7 +391,10 @@ canvas.addEventListener("pointerdown", event =>{
         mouseY <= board.y + board.height
     ){
         start = true;
+        startTime = performance.now();
         spawnPoint();
+        won = false;
+        lost = false;
     }
 
     for(let button of lbButtons){
@@ -402,7 +453,10 @@ window.addEventListener("keydown", event =>{
 
     if(event.key === " "){
         start = true;
+        startTime = performance.now();
         spawnPoint();
+        won = false;
+        lost = false;
     }
 
     if(event.key === "Escape"){
@@ -493,27 +547,6 @@ window.addEventListener("resize", () => {
         board.y + border / 2 + point.radius,
         Math.min(board.y + board.height - border / 2 - point.radius, point.y)
     );
-
-
-    topSide.x = 0;
-    topSide.y = 0;
-    topSide.width = 0 + canvas.width;
-    topSide.height = 0 + upperBoard.height + board.height * 0.2;
-
-    downSide.x = 0;
-    downSide.y = 0 + upperBoard.height + board.height * 0.8;
-    downSide.width = 0 + canvas.width;
-    downSide.height = canvas.height;
-
-    rightSide.x = board.x + board.width / 2;
-    rightSide.y = 0 + upperBoard.height + board.height * 0.2;
-    rightSide.width = 0 + canvas.width;
-    rightSide.height = board.height * 0.6;
-
-    leftSide.x = 0;
-    leftSide.y = 0 + upperBoard.height + board.height * 0.2;
-    leftSide.width = canvas.width / 2;
-    leftSide.height = board.height * 0.6;
 
     buttonWidth = lowerBoard.width * 0.25;
     buttonHeight = lowerBoard.height * 0.3;
