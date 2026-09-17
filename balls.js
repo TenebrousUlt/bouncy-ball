@@ -67,9 +67,10 @@ const colors = {
     bg: "#17101c",
     stroke: "#100c14",
     ball: "#ffff",
+    obstacle: "#bbacc5",
     sub: "#e5c7fa",
     point: "#8d61ab",
-    button: "#2e1f38"
+    button: "#2e1f38",
 }
 
 const background = new Image();
@@ -154,8 +155,8 @@ function draw(){
             ctx.fillText("MODE: HARD",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
             ctx.font = `${fontSize / 2}px Germania One`;
             ctx.fillText(`WIN BY GETTING A SCORE OF ${requiredScore} IN ${timer} SECONDS`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.5));
-            //ctx.fillText(`WATCH OUT FOR OBSTACLES TOO`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.25));
-        }// work on making win mode and lost mode look better plus make hard mode
+            ctx.fillText(`WATCH OUT FOR OBSTACLES TOO`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.25));
+        }
 
         for(let button of lbButtons){
             if(button.text === "QUIT"){
@@ -190,6 +191,26 @@ function draw(){
         if(hard || normal){
             ctx.fillText(timer,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
         }
+        if(hard){
+
+            ctx.strokeStyle = colors.obstacle;
+            ctx.lineWidth = obstacleLineWidth;
+
+            ctx.beginPath();
+            ctx.moveTo(obstacle1.x, obstacle1.y);
+            ctx.lineTo(obstacle1.x + obstacleLength, obstacle1.y);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(obstacle2.x, obstacle2.y);
+            ctx.lineTo(obstacle2.x, obstacle2.y + obstacleLength);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(obstacle3.x, obstacle3.y);
+            ctx.lineTo(obstacle3.x, obstacle3.y + obstacleLength);
+            ctx.stroke();
+        }
     }
 
     if(won){
@@ -217,6 +238,35 @@ let ball = {
     velocityY: 0
 };
 
+let obstacleLength = board.width * 0.2;
+let obstacleLineWidth = 10;
+let obstacles = [
+
+    {
+        x: board.x + (board.width / 2),
+        y: board.y + (board.height / 3),
+        size: obstacleLength,
+        obstacleSpeed : 200,
+    },
+
+    {
+        x: board.x + (board.width * 0.2),
+        y: board.y + (board.height / 2),
+        size: obstacleLength,
+        obstacleSpeed : 200,
+    },
+
+    {
+        x: board.x + (board.width * 0.8),
+        y: board.y + (board.height / 2),
+        size: obstacleLength,
+        obstacleSpeed : 200,
+    },
+]
+
+let obstacle1 = obstacles[0];
+let obstacle2 = obstacles[1];
+let obstacle3 = obstacles[2];
 
 const border = 5;
 let topWall = board.y + border / 2;
@@ -288,6 +338,33 @@ function gameLogic(){
             reset();
         }
     }
+
+    if(start && hard){
+        obstacle1.x += obstacle1.obstacleSpeed * deltaTime;
+        obstacle2.y += obstacle2.obstacleSpeed * deltaTime;
+        obstacle3.y -= obstacle3.obstacleSpeed * deltaTime;// make collision for these
+
+        if(obstacle1.x + obstacleLength >= rightWall){
+            obstacle1.obstacleSpeed *= -1;
+        }
+        if(obstacle1.x <= leftWall){
+            obstacle1.obstacleSpeed *= -1;
+        }
+
+        if(obstacle2.y + obstacleLength >= downWall){
+            obstacle2.obstacleSpeed *= -1;
+        }
+        if(obstacle2.y <= topWall){
+            obstacle2.obstacleSpeed *= -1;
+        }
+
+        if(obstacle3.y + obstacleLength >= downWall){
+            obstacle3.obstacleSpeed *= -1;
+        }
+        if(obstacle3.y <= topWall){
+            obstacle3.obstacleSpeed *= -1;
+        }
+    }
 }
 
 let gravity = 1700;
@@ -318,7 +395,7 @@ function ballMovement(){
         ball.y += ball.velocityY * deltaTime;
         
 
-        if(ball.y + ball.radius >= downWall){
+        if((ball.y + ball.radius >= downWall)){
             ball.velocityY *= -1;
         }
         if(ball.y - ball.radius <= topWall){
@@ -330,6 +407,7 @@ function ballMovement(){
         if(ball.x - ball.radius<= leftWall){
             ball.velocityX *= -1;
         }
+
 
         if(keys.up){
             ball.velocityY -= accelerationV * deltaTime;
