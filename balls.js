@@ -81,6 +81,11 @@ let start = false;
 let lost = false;
 let won = false;
 
+let wins1 = 0;
+wins1 = Number(localStorage.getItem("win1"));
+let wins2 = 0;
+wins2 = Number(localStorage.getItem("win2"));
+
 let radius = Math.min (board.width / 50, board.height / 50);
 
 let deltaTime = 0;
@@ -88,10 +93,12 @@ let lastTime = 0;
 
 let score = 0;
 let requiredScore = 50;
+let highscore = 0;
+highscore = Number(localStorage.getItem("score"));
 
 let normal = true;
 let hard = false;
-let timer = 70;
+let timer = 80;
 let startTime = 0;
 
 function game(time){
@@ -123,11 +130,7 @@ function draw(){
     ctx.fillRect(lowerBoard.x,lowerBoard.y,lowerBoard.width,lowerBoard.height);
     ctx.strokeRect(lowerBoard.x, lowerBoard.y, lowerBoard.width, lowerBoard.height);
 
-    ctx.fillStyle = colors.sub;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.font = `${fontSize}px Germania One`;
-    ctx.fillText(`SCORE: ${score}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 2))
+    
     
 
     if(!start){
@@ -138,21 +141,24 @@ function draw(){
         ctx.font = `${fontSize}px Germania One`;
 
         if(!won && !lost){
-            ctx.fillText("CLICK TO START",board.x + (board.width / 2), board.y + (board.height / 2))
+            ctx.fillText("CLICK TO START",board.x + (board.width / 2), board.y + (board.height / 2));
         }
 
         if(!normal && !hard){
             ctx.fillText("MODE: FREE",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
+            ctx.fillText(`HIGHSCORE: ${highscore}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 2));
             ctx.font = `${fontSize / 2}px Germania One`;
             ctx.fillText("NO TIMER, PLAY AS MUCH AS YOU WANT",lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.5));
         }
         if(normal){
             ctx.fillText("MODE: NORMAL",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
+            ctx.fillText(`WINS: ${wins1}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 2));
             ctx.font = `${fontSize / 2}px Germania One`;
             ctx.fillText(`WIN BY GETTING A SCORE OF ${requiredScore} IN ${timer} SECONDS`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.5));
         }
         if(hard){
             ctx.fillText("MODE: HARD",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
+            ctx.fillText(`WINS: ${wins2}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 2));
             ctx.font = `${fontSize / 2}px Germania One`;
             ctx.fillText(`WIN BY GETTING A SCORE OF ${requiredScore} IN ${timer} SECONDS`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.5));
             ctx.fillText(`WATCH OUT FOR OBSTACLES TOO`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.25));
@@ -177,6 +183,12 @@ function draw(){
         spawnBall();
         spawnPoint();
 
+        ctx.fillStyle = colors.sub;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `${fontSize}px Germania One`;
+        ctx.fillText(`SCORE: ${score}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 2))
+
         ctx.fillStyle = colors.button;
         ctx.fillRect(lbButtons[3].x,lbButtons[3].y,lbButtons[3].width,lbButtons[3].height);
         ctx.strokeRect(lbButtons[3].x, lbButtons[3].y, lbButtons[3].width, lbButtons[3].height);
@@ -187,6 +199,14 @@ function draw(){
 
         ctx.fillText(`W/A/D  |  ↑/←/→ TO MOVE`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 2))
         ctx.fillText(`ESC TO QUIT`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.25))
+
+        if(!hard && !normal){
+            ctx.fillStyle = colors.sub;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = `${fontSize}px Germania One`;
+            ctx.fillText(`HIGHSCORE: ${highscore}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4))
+        }
 
         if(hard || normal){
             ctx.fillText(timer,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
@@ -321,6 +341,10 @@ function gameLogic(){
              + topWall + point.radius;
 
         score++;
+        if(score > highscore){
+            highscore = score;
+            localStorage.setItem("score", highscore);
+        }
         }
     
     if(start && (normal || hard)){
@@ -333,6 +357,14 @@ function gameLogic(){
             reset();
         }
         if((normal || hard) && score === requiredScore){
+            if(normal){
+                wins1++;
+                localStorage.setItem("win1", wins1);
+            }
+            if(hard){
+                wins2++;
+                localStorage.setItem("win2", wins2);
+            }
             won = true;
             start = false;
             reset();
@@ -340,9 +372,10 @@ function gameLogic(){
     }
 
     if(start && hard){
+
         obstacle1.x += obstacle1.obstacleSpeed * deltaTime;
         obstacle2.y += obstacle2.obstacleSpeed * deltaTime;
-        obstacle3.y -= obstacle3.obstacleSpeed * deltaTime;// make collision for these
+        obstacle3.y -= obstacle3.obstacleSpeed * deltaTime;
 
         if(obstacle1.x + obstacleLength >= rightWall){
             obstacle1.obstacleSpeed *= -1;
@@ -388,12 +421,117 @@ function ballMovement(){
     const leftWall = board.x + border / 2;
     const rightWall = board.x + board.width - border / 2;
 
+    let ob1CenterX = obstacle1.x + obstacleLength / 2;
+    let ob1CenterY = obstacle1.y;
+    let ob2CenterX = obstacle2.x
+    let ob2CenterY = obstacle2.y + obstacleLength / 2;
+    let ob3CenterX = obstacle3.x;
+    let ob3CenterY = obstacle3.y + obstacleLength / 2;
+
+    let halfWidth = (obstacleLength / 2) + ball.radius;
+    let halfHeight = (obstacleLineWidth / 2) + ball.radius;
+    let halfWidth2 = (obstacleLineWidth / 2) + ball.radius;
+    let halfHeight2 = (obstacleLength / 2) + ball.radius;
+
+    let dx = ball.x - ob1CenterX;
+    let dy = ball.y - ob1CenterY;
+    let dx2 = ball.x - ob2CenterX;
+    let dy2 = ball.y - ob2CenterY;
+    let dx3 = ball.x - ob3CenterX;
+    let dy3 = ball.y - ob3CenterY;
+
     if(start){
+
+        if(hard){
+
+            if(Math.abs(dx) < halfWidth && Math.abs(dy) < halfHeight){
+
+                let overlapX = halfWidth - Math.abs(dx);
+                let overlapY = halfHeight - Math.abs(dy);
+
+
+                if(overlapX < overlapY){
+
+                    if(dx > 0){
+                        ball.x = (obstacle1.x + obstacleLength) + ball.radius;
+                    }
+                    else{
+                        ball.x = obstacle1.x - ball.radius;
+                    }
+                    ball.velocityX *= -1;
+                }
+                else{
+
+                    if(dy > 0){
+                        ball.y = (obstacle1.y + obstacleLineWidth / 2) + ball.radius;
+                    }
+                    else{
+                        ball.y = (obstacle1.y - obstacleLineWidth / 2) - ball.radius;
+                    }
+                    ball.velocityY *= -1;
+                }
+            }
+
+            if(Math.abs(dx2) < halfWidth2 && Math.abs(dy2) < halfHeight2){
+
+                let overlapX = halfWidth2 - Math.abs(dx2);
+                let overlapY = halfHeight2 - Math.abs(dy2);
+
+
+                if(overlapX < overlapY){
+
+                    if(dx2 > 0){
+                        ball.x = obstacle2.x + obstacleLineWidth / 2 + ball.radius;
+                    }
+                    else{
+                        ball.x = obstacle2.x - obstacleLineWidth / 2 - ball.radius;
+                    }
+                    ball.velocityX *= -1;
+                }
+                else{
+
+                    if(dy2 > 0){
+                        ball.y = obstacle2.y + obstacleLength + ball.radius;
+                    }
+                    else{
+                        ball.y = obstacle2.y - ball.radius;
+                    }
+                    ball.velocityY *= -1;
+                }
+            }
+
+            if(Math.abs(dx3) < halfWidth2 && Math.abs(dy3) < halfHeight2){
+
+                let overlapX = halfWidth2 - Math.abs(dx3);
+                let overlapY = halfHeight2 - Math.abs(dy3);
+
+                if(overlapX < overlapY){
+
+                    if(dx3 > 0){
+                        ball.x = obstacle3.x + obstacleLineWidth / 2 + ball.radius;
+                    }
+                    else{
+                        ball.x = obstacle3.x - obstacleLineWidth / 2 - ball.radius;
+                    }
+                    ball.velocityX *= -1;
+                }
+                else{
+
+                    if(dy3 > 0){
+                        ball.y = obstacle3.y + obstacleLength + ball.radius;
+                    }
+                    else{
+                        ball.y = obstacle3.y - ball.radius;
+                    }
+                    ball.velocityY *= -1;
+                }
+            }
+        }
 
         ball.velocityY += gravity * deltaTime;
         ball.x += ball.velocityX * deltaTime;
         ball.y += ball.velocityY * deltaTime;
-        
+
 
         if((ball.y + ball.radius >= downWall)){
             ball.velocityY *= -1;
@@ -434,8 +572,6 @@ function ballMovement(){
         if(!keys.down && ball.velocityY > 0){
             ball.velocityY = Math.max(0,ball.velocityY - friction * deltaTime);
         }
-
-
 
         ball.x = Math.max(board.x + border / 2 + ball.radius, Math.min(board.x + board.width - border / 2 - ball.radius, ball.x));
         ball.y = Math.max(board.y + border / 2 + ball.radius, Math.min(board.y + board.height - border / 2 - ball.radius, ball.y));
@@ -574,6 +710,14 @@ window.addEventListener("keyup", event => {
 
 window.addEventListener("resize", () => {
 
+    let obstacle1RelativeX = (obstacle1.x - board.x) / board.width;
+    let obstacle1RelativeY = (obstacle1.y - board.y) / board.height;
+
+    let obstacle2RelativeX = (obstacle2.x - board.x) / board.width;
+    let obstacle2RelativeY = (obstacle2.y - board.y) / board.height;
+    
+    let obstacle3RelativeX = (obstacle3.x - board.x) / board.width;
+    let obstacle3RelativeY = (obstacle3.y - board.y) / board.height;
 
     ball.relativeX = (ball.x - board.x) / board.width;
     ball.relativeY = (ball.y - board.y) / board.height;
@@ -650,6 +794,25 @@ window.addEventListener("resize", () => {
     lbButtons[3].y = lowerBoard.y + gapY;
     lbButtons[3].width = buttonWidth;
     lbButtons[3].height = buttonHeight;
+
+    obstacleLength = board.width * 0.2;
+    obstacleLineWidth = 10;
+
+    obstacle1.x = board.x + obstacle1RelativeX * board.width;
+    obstacle1.y = board.y + obstacle1RelativeY * board.height;
+    obstacle1.size = obstacleLength;
+    obstacle1.obstacleSpeed = 200;
+
+    obstacle2.x = board.x + obstacle2RelativeX * board.width;
+    obstacle2.y = board.y + obstacle2RelativeY * board.height;
+    obstacle2.size = obstacleLength;
+    obstacle2.obstacleSpeed = 200;
+
+    obstacle3.x = board.x + obstacle3RelativeX * board.width;
+    obstacle3.y = board.y + obstacle3RelativeY * board.height;
+    obstacle3.size = obstacleLength;
+    obstacle3.obstacleSpeed = 200;
+
 
     draw();
 
