@@ -349,7 +349,7 @@ function gameLogic(){
     
     if(start && (normal || hard)){
         let elapsed = (performance.now() - startTime) / 1000;
-        timer = Math.max(0, 70 - Math.floor(elapsed));
+        timer = Math.max(0, 80 - Math.floor(elapsed));
 
         if(timer === 0){
             lost = true;
