@@ -60,21 +60,116 @@ const lbButtons = [
     x: lowerBoard.x + (2.5 * gap) + buttonWidth,
     y: lowerBoard.y + gapY
 },
+    {
+    text: "EXTRA",
+    width: buttonWidth,
+    height: buttonHeight,
+    x: lowerBoard.x + (4 * gap) + (2 * buttonWidth),
+    y: lowerBoard.y + (lowerBoard.height / 2)
+},
+];
 
+const extraButtons = [
+
+    {
+        text: "DELUSION",
+        width: board.width * 0.8,
+        height: buttonHeight,
+        x: board.x + gap * 2,
+        y: board.y + gapY * 2,
+        action: "t1",
+    },
+
+    {
+        text: "ABYSS",
+        width: board.width * 0.8,
+        height: buttonHeight,
+        x: board.x + gap * 2,
+        y: board.y + gapY * 3 + buttonHeight,
+        action: "t2",
+    },
+
+    {
+        text: "AMBER",
+        width: board.width * 0.8,
+        height: buttonHeight,
+        x: board.x + gap * 2,
+        y: board.y + gapY * 4 + buttonHeight * 2,
+        action: "t3",
+    },
+
+    {
+        text: "HACKER",
+        width: board.width * 0.8,
+        height: buttonHeight,
+        x: board.x + gap * 2,
+        y: board.y + gapY * 5 + buttonHeight * 3,
+        action: "t4",
+    },
 ]
 
-const colors = {
-    bg: "#17101c",
-    stroke: "#100c14",
-    ball: "#ffff",
-    obstacle: "#bbacc5",
-    sub: "#e5c7fa",
-    point: "#8d61ab",
-    button: "#2e1f38",
+const themes = {
+
+    delusion: {
+        bg: "#17101c",
+        stroke: "#100c14",
+        ball: "#ffff",
+        obstacle: "#bbacc5",
+        sub: "#e5c7fa",
+        point: "#8d61ab",
+        button: "#2e1f38",
+        title: "DELUSION",
+        image: "images/delusion.jpg"
+    },
+    abyss: {
+        bg: "#101b26",
+        stroke: "#091017",
+        ball: "#e8ffff",
+        obstacle: "#73a9ad",
+        sub: "#b9e8e8",
+        point: "#36a6b5",
+        button: "#19313a",
+        title: "ABYSS",
+        image: "images/abyss.jpg"
+    },
+    amber: {
+        bg: "#1c1710",
+        stroke: "#0e0b07",
+        ball: "#fff8e6",
+        obstacle: "#a99a78",
+        sub: "#e5cf9a",
+        point: "#d99a35",
+        button: "#332717",
+        title: "AMBER",
+        image: "images/amber.png"
+    },
+    hacker: {
+        bg: "#0d120e",
+        stroke: "#050805",
+        ball: "#eaffea",
+        obstacle: "#3C3C3B",
+        sub: "#00e600",
+        point: "#4caf50",
+        button: "#172419",
+        title: "HACKER",
+        image: "images/hacka.jpg"
+    },
 }
 
-const background = new Image();
-background.src = "images/50863.jpg";
+let colors = themes.delusion;
+
+let savedTheme = localStorage.getItem("theme");
+
+if(savedTheme && themes[savedTheme]){
+
+    colors = themes[savedTheme]
+}
+else{
+    colors = themes.delusion;
+}
+
+let background;
+
 
 let fontSize = Math.min(board.width / 15, board.height / 15);
 let start = false;
@@ -98,12 +193,19 @@ highscore = Number(localStorage.getItem("score"));
 
 let normal = true;
 let hard = false;
+let customize = false;
+
 let timer = 80;
 let startTime = 0;
 
 function game(time){
 
     requestAnimationFrame(game);
+
+    if(loadedAssets < totalAssets){
+        drawLoading();
+        return;
+    }
 
     deltaTime = Math.min((time - lastTime) / 1000, 0.05);
     lastTime = time;
@@ -116,7 +218,7 @@ function game(time){
 function draw(){
 
     ctx.drawImage(background,0,0,canvas.width,canvas.height);
-
+    
     ctx.fillStyle = colors.bg;
     ctx.strokeStyle = colors.stroke;
     ctx.lineWidth = 5;
@@ -129,11 +231,40 @@ function draw(){
 
     ctx.fillRect(lowerBoard.x,lowerBoard.y,lowerBoard.width,lowerBoard.height);
     ctx.strokeRect(lowerBoard.x, lowerBoard.y, lowerBoard.width, lowerBoard.height);
-
     
-    
+    if(customize){
 
-    if(!start){
+        ctx.fillStyle = colors.sub;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `${fontSize}px Germania One`;
+
+        ctx.fillText("CUSTOMIZE THE GAME",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
+        ctx.fillText(`CURRENT THEME: ${colors.title}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 2));
+
+        for(let button of extraButtons){
+
+            ctx.fillStyle = colors.button;
+            
+            ctx.fillRect(button.x,button.y,button.width,button.height);
+            ctx.strokeRect(button.x, button.y, button.width, button.height);
+
+            ctx.fillStyle = colors.sub;
+            ctx.font = `${Math.min(button.width / 2, button.height / 2)}px Germania One`;
+            ctx.fillText(button.text,button.x + button.width / 2,button.y + button.height / 2);
+        }
+
+        ctx.fillStyle = colors.button;
+        ctx.fillRect(lbButtons[3].x,lbButtons[3].y,lbButtons[3].width,lbButtons[3].height);
+        ctx.strokeRect(lbButtons[3].x, lbButtons[3].y, lbButtons[3].width, lbButtons[3].height);
+
+        ctx.fillStyle = colors.sub;
+        ctx.font = `${Math.min(lbButtons[3].width / 2, lbButtons[3].height / 2)}px Germania One`;
+        ctx.fillText(lbButtons[3].text,lbButtons[3].x + lbButtons[3].width / 2,lbButtons[3].y + lbButtons[3].height / 2);
+
+    }
+
+    if(!start & !customize){
 
         ctx.fillStyle = colors.sub;
         ctx.textAlign = "center";
@@ -148,20 +279,20 @@ function draw(){
             ctx.fillText("MODE: FREE",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
             ctx.fillText(`HIGHSCORE: ${highscore}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 2));
             ctx.font = `${fontSize / 2}px Germania One`;
-            ctx.fillText("NO TIMER, PLAY AS MUCH AS YOU WANT",lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.5));
+            ctx.fillText("NO TIMER, PLAY AS MUCH AS YOU WANT",lowerBoard.x + (lowerBoard.width / 3), lowerBoard.y + (lowerBoard.height / 1.5));
         }
         if(normal){
             ctx.fillText("MODE: NORMAL",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
             ctx.fillText(`WINS: ${wins1}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 2));
             ctx.font = `${fontSize / 2}px Germania One`;
-            ctx.fillText(`WIN BY GETTING A SCORE OF ${requiredScore} IN ${timer} SECONDS`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.5));
+            ctx.fillText(`WIN BY GETTING A SCORE OF ${requiredScore} IN ${timer} SECONDS`,lowerBoard.x + (lowerBoard.width / 3), lowerBoard.y + (lowerBoard.height / 1.5));
         }
         if(hard){
             ctx.fillText("MODE: HARD",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
             ctx.fillText(`WINS: ${wins2}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 2));
             ctx.font = `${fontSize / 2}px Germania One`;
-            ctx.fillText(`WIN BY GETTING A SCORE OF ${requiredScore} IN ${timer} SECONDS`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.5));
-            ctx.fillText(`WATCH OUT FOR OBSTACLES TOO`,lowerBoard.x + (lowerBoard.width / 2), lowerBoard.y + (lowerBoard.height / 1.25));
+            ctx.fillText(`WIN BY GETTING A SCORE OF ${requiredScore} IN ${timer} SECONDS`,lowerBoard.x + (lowerBoard.width / 3), lowerBoard.y + (lowerBoard.height / 1.5));
+            ctx.fillText(`WATCH OUT FOR OBSTACLES TOO`,lowerBoard.x + (lowerBoard.width / 3), lowerBoard.y + (lowerBoard.height / 1.25));
         }
 
         for(let button of lbButtons){
@@ -209,7 +340,7 @@ function draw(){
         }
 
         if(hard || normal){
-            ctx.fillText(timer,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
+            ctx.fillText(`TIME LEFT: ${timer}`,upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
         }
         if(hard){
 
@@ -247,6 +378,26 @@ function draw(){
         ctx.font = `${fontSize}px Germania One`;
         ctx.fillText("YOU LOST",board.x + (board.width / 2), board.y + (board.height / 2));
     }
+
+}
+
+function drawLoading(){
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = colors.sub;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `${fontSize}px Germania One`;
+
+    ctx.fillText(
+        `LOADING ${loadedAssets}/${totalAssets}`,
+        canvas.width / 2,
+        canvas.height / 2
+    );
 
 }
 let ball = {
@@ -592,6 +743,24 @@ function reset(){
     point.y = Math.random() * (downWall - topWall - radius * 1.3 * 2) + topWall + radius * 1.3;
 }
 
+function changeTheme(theme){
+
+    colors = themes[theme];
+
+    if(theme === "delusion"){
+        background = loadedImages[0];
+    }
+    if(theme === "abyss"){
+        background = loadedImages[1];
+    }
+    if(theme === "amber"){
+        background = loadedImages[2];
+    }
+    if(theme === "hacker"){
+        background = loadedImages[3];
+    }
+}
+
 
 canvas.addEventListener("pointerdown", event =>{
 
@@ -604,11 +773,13 @@ canvas.addEventListener("pointerdown", event =>{
         mouseY >= board.y &&
         mouseY <= board.y + board.height
     ){
-        start = true;
-        startTime = performance.now();
-        spawnPoint();
-        won = false;
-        lost = false;
+        if(!customize){
+            start = true;
+            startTime = performance.now();
+            spawnPoint();
+            won = false;
+            lost = false;
+        }
     }
 
     for(let button of lbButtons){
@@ -625,9 +796,12 @@ canvas.addEventListener("pointerdown", event =>{
                         reset();
                         break;
                     }
+                    if(customize){
+                        customize = false;
+                    }
                     break;
                 case "NORMAL":
-                    if(!start){
+                    if(!start && !customize){
                         normal = true;
                         hard = false;
                         break;
@@ -635,7 +809,7 @@ canvas.addEventListener("pointerdown", event =>{
                     break;
 
                 case "HARD":
-                    if(!start){
+                    if(!start && !customize){
                         normal = false;
                         hard = true;
                         break;
@@ -643,16 +817,61 @@ canvas.addEventListener("pointerdown", event =>{
                     break;
 
                 case "FREE":
-                    if(!start){
+                    if(!start && !customize){
                         normal = false;
-                    hard = false;
+                        hard = false;
                         break;
                     }
                     break;
+                case "EXTRA":
+                    if(!start && !customize){
+                        customize = true;
+                        won = false;
+                        lost = false;
+                        break;
+                    }
+                    else{
+                        customize = false;
+                        break;
+                    }
             }
         }
     }
     
+    for(let button of extraButtons){
+        if (
+            mouseX >= button.x &&
+            mouseX <= button.x + button.width &&
+            mouseY >= button.y &&
+            mouseY <= button.y + button.height
+        ){
+            if(customize){
+
+                switch(button.action){
+                
+                case "t1":
+                    changeTheme("delusion");
+                    localStorage.setItem("theme", "delusion");
+                    break;
+
+                case "t2":
+                    changeTheme("abyss");
+                    localStorage.setItem("theme", "abyss");
+                    break;
+
+                case "t3":
+                    changeTheme("amber");
+                    localStorage.setItem("theme", "amber");
+                    break;
+
+                case "t4":
+                    changeTheme("hacker");
+                    localStorage.setItem("theme", "hacker");
+                    break;
+            }
+            }
+        }
+    }
 })
 
 canvas.addEventListener("pointerup", event =>{
@@ -665,17 +884,24 @@ canvas.addEventListener("pointerup", event =>{
 
 window.addEventListener("keydown", event =>{
 
-    if(event.key === " "){
-        start = true;
-        startTime = performance.now();
-        spawnPoint();
-        won = false;
-        lost = false;
+    if(!customize){
+        if(event.key === " "){
+            start = true;
+            startTime = performance.now();
+            spawnPoint();
+            won = false;
+            lost = false;
+        }
     }
 
     if(event.key === "Escape"){
-        start = false;
-        reset();
+        if(start){
+            start = false;
+            reset();
+        }
+        if(customize){
+            customize = false;
+        }
     }
 
     if(event.key === "ArrowUp" || event.key === "w"){
@@ -795,29 +1021,92 @@ window.addEventListener("resize", () => {
     lbButtons[3].width = buttonWidth;
     lbButtons[3].height = buttonHeight;
 
+    lbButtons[4].x = lowerBoard.x + (4 * gap) + (2 * buttonWidth);
+    lbButtons[4].y = lowerBoard.y + (lowerBoard.height / 2);
+    lbButtons[4].width = buttonWidth;
+    lbButtons[4].height = buttonHeight;
+
+    extraButtons[0].x = board.x + gap * 2;
+    extraButtons[0].y = board.y + gapY * 2;
+    extraButtons[0].width = board.width * 0.8;
+    extraButtons[0].height = buttonHeight;
+
+    extraButtons[1].x = board.x + gap * 2;
+    extraButtons[1].y = board.y + gapY * 3 + buttonHeight;
+    extraButtons[1].width = board.width * 0.8;
+    extraButtons[1].height = buttonHeight;
+
+    extraButtons[2].x = board.x + gap * 2;
+    extraButtons[2].y = board.y + gapY * 4 + buttonHeight * 2;
+    extraButtons[2].width = board.width * 0.8;
+    extraButtons[2].height = buttonHeight;
+
+    extraButtons[3].x = board.x + gap * 2;
+    extraButtons[3].y = board.y + gapY * 5 + buttonHeight * 3;
+    extraButtons[3].width = board.width * 0.8;
+    extraButtons[3].height = buttonHeight;
+
     obstacleLength = board.width * 0.2;
     obstacleLineWidth = 10;
 
     obstacle1.x = board.x + obstacle1RelativeX * board.width;
     obstacle1.y = board.y + obstacle1RelativeY * board.height;
     obstacle1.size = obstacleLength;
-    obstacle1.obstacleSpeed = 200;
 
     obstacle2.x = board.x + obstacle2RelativeX * board.width;
     obstacle2.y = board.y + obstacle2RelativeY * board.height;
     obstacle2.size = obstacleLength;
-    obstacle2.obstacleSpeed = 200;
 
     obstacle3.x = board.x + obstacle3RelativeX * board.width;
     obstacle3.y = board.y + obstacle3RelativeY * board.height;
     obstacle3.size = obstacleLength;
-    obstacle3.obstacleSpeed = 200;
 
 
     draw();
 
 })
 
-background.onload = () => {
-    game();
+const assets = {
+
+    images: [
+        themes.delusion.image,
+        themes.abyss.image,
+        themes.amber.image,
+        themes.hacker.image,
+    ],
+    audio: [
+
+    ]
+};
+
+const totalAssets = assets.images.length + assets.audio.length;
+let loadedAssets = 0;
+let loadedImages = [];
+
+for(let src of assets.images){
+
+    let image = new Image();
+
+    image.onload = () => {
+        loadedAssets++;
+    };
+
+    image.src = src;
+
+    loadedImages.push(image);
 }
+
+if(savedTheme === "abyss"){
+    background = loadedImages[1];
+}
+else if(savedTheme === "amber"){
+    background = loadedImages[2];
+}
+else if(savedTheme === "hacker"){
+    background = loadedImages[3];
+}
+else{
+    background = loadedImages[0];
+}
+
+game();
