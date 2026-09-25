@@ -189,7 +189,7 @@ let lastTime = 0;
 let score = 0;
 let requiredScore = 50;
 let highscore = 0;
-highscore = Number(localStorage.getItem("score"));
+highscore = Number(localStorage.getItem("score")) || 0;
 
 let normal = true;
 let hard = false;
