@@ -90,7 +90,7 @@ const extraButtons = [
     },
 
     {
-        text: "AMBER",
+        text: "BLAME",
         width: board.width * 0.8,
         height: buttonHeight,
         x: board.x + gap * 2,
@@ -106,7 +106,45 @@ const extraButtons = [
         y: board.y + gapY * 5 + buttonHeight * 3,
         action: "t4",
     },
+    {
+        text: "IMG: ON",
+        width: board.width * 0.35,
+        height: buttonHeight * 3,
+        x: board.x + gap * 2,
+        y: board.y + gapY * 6 + buttonHeight * 4,
+        action: "img",
+    },
+    {
+        text: "SECRET",
+        width: board.width * 0.35,
+        height: buttonHeight * 3,
+        x: board.x + board.width * 0.35 + gap * 4,
+        y: board.y + gapY * 6 + buttonHeight * 4,
+        action: "secret",
+    },
 ]
+
+const confirmButtons = [
+
+    {
+        text: "NO",
+        width: board.width * 0.35,
+        height: buttonHeight * 3,
+        x: canvas.width / 2 - gap * 3 - board.width * 0.35,
+        y: canvas.height * 0.3,
+        action: "n",
+    },
+
+    {
+        text: "YES",
+        width: board.width * 0.35,
+        height: buttonHeight * 3,
+        x: canvas.width / 2 + gap * 3,
+        y: canvas.height * 0.3,
+        action: "y",
+    },
+
+];
 
 const themes = {
 
@@ -132,16 +170,16 @@ const themes = {
         title: "ABYSS",
         image: "images/abyss.jpg"
     },
-    amber: {
-        bg: "#1c1710",
-        stroke: "#0e0b07",
-        ball: "#fff8e6",
-        obstacle: "#a99a78",
-        sub: "#e5cf9a",
-        point: "#d99a35",
-        button: "#332717",
-        title: "AMBER",
-        image: "images/amber.png"
+    blame: {
+        bg: "#000000",
+        stroke: "#f1efed",
+        ball: "#f5f5f5",
+        obstacle: "#5b5b5b",
+        sub: "#c7c7c7",
+        point: "#626262",
+        button: "#1f1f1f",
+        title: "BLAME",
+        image: "images/blame.jpg"
     },
     hacker: {
         bg: "#0d120e",
@@ -157,6 +195,16 @@ const themes = {
 }
 
 let colors = themes.delusion;
+let imgMode = true;
+if(localStorage.getItem("imgMode") === "true"){
+    imgMode = true;
+    extraButtons[4].text = "IMG: ON";
+}
+else{
+    imgMode = false;
+    extraButtons[4].text = "IMG: OFF";
+}
+
 
 let savedTheme = localStorage.getItem("theme");
 
@@ -194,6 +242,7 @@ highscore = Number(localStorage.getItem("score")) || 0;
 let normal = true;
 let hard = false;
 let customize = false;
+let confirm = false;
 
 let timer = 80;
 let startTime = 0;
@@ -217,8 +266,14 @@ function game(time){
 
 function draw(){
 
-    ctx.drawImage(background,0,0,canvas.width,canvas.height);
-    
+    if(imgMode){
+        ctx.drawImage(background,0,0,canvas.width,canvas.height);
+    }
+    else{
+        ctx.fillStyle = colors.bg;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
+
     ctx.fillStyle = colors.bg;
     ctx.strokeStyle = colors.stroke;
     ctx.lineWidth = 5;
@@ -250,7 +305,12 @@ function draw(){
             ctx.strokeRect(button.x, button.y, button.width, button.height);
 
             ctx.fillStyle = colors.sub;
-            ctx.font = `${Math.min(button.width / 2, button.height / 2)}px Germania One`;
+            if(button.action !== "img" && button.action !== "secret"){
+                ctx.font = `${Math.min(button.width / 2, button.height / 2)}px Germania One`;
+            }
+            else{
+                ctx.font = `${Math.min(button.width / 2, button.height / 4)}px Germania One`;
+            }
             ctx.fillText(button.text,button.x + button.width / 2,button.y + button.height / 2);
         }
 
@@ -379,6 +439,21 @@ function draw(){
         ctx.fillText("YOU LOST",board.x + (board.width / 2), board.y + (board.height / 2));
     }
 
+    if(confirm){
+        ctx.fillStyle = colors.bg;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+
+        for(let button of confirmButtons){
+
+            ctx.fillStyle = colors.button;
+            ctx.fillRect(button.x,button.y,button.width,button.height);
+            ctx.strokeRect(button.x, button.y, button.width, button.height);
+
+            ctx.fillStyle = colors.sub;
+            ctx.font = `${fontSize * 1.5}px Germania One`;
+            ctx.fillText(button.text,button.x + button.width / 2,button.y + button.height / 2);
+        }
+    }
 }
 
 function drawLoading(){
@@ -753,7 +828,7 @@ function changeTheme(theme){
     if(theme === "abyss"){
         background = loadedImages[1];
     }
-    if(theme === "amber"){
+    if(theme === "blame"){
         background = loadedImages[2];
     }
     if(theme === "hacker"){
@@ -860,18 +935,62 @@ canvas.addEventListener("pointerdown", event =>{
                     break;
 
                 case "t3":
-                    changeTheme("amber");
-                    localStorage.setItem("theme", "amber");
+                    changeTheme("blame");
+                    localStorage.setItem("theme", "blame");
                     break;
 
                 case "t4":
                     changeTheme("hacker");
                     localStorage.setItem("theme", "hacker");
                     break;
-            }
+                
+                case "img":
+                    if(imgMode){
+                        button.text = "IMG: OFF";
+                        imgMode = false;
+                        localStorage.setItem("imgMode", "false");
+                        break;
+                    }
+                    else{
+                        button.text = "IMG: ON";
+                        imgMode = true;
+                        localStorage.setItem("imgMode", "true");
+                        break;
+                    }
+                
+                case "secret":
+                    confirm = true;
+                    break;
             }
         }
+        }
+
+        for(let button of confirmButtons){
+            if (
+                mouseX >= button.x &&
+                mouseX <= button.x + button.width &&
+                mouseY >= button.y &&
+                mouseY <= button.y + button.height
+            ){
+                if(confirm){
+
+                    switch(button.action){
+
+                        case "n":
+                            confirm = false;
+                            break;
+
+                        case "y":
+                            confirm = false;
+                            window.open("https://youtu.be/QDia3e12czc", "_blank");
+                            break;
+                    }
+                }
+            }
+        }
+
     }
+    
 })
 
 canvas.addEventListener("pointerup", event =>{
@@ -1046,6 +1165,26 @@ window.addEventListener("resize", () => {
     extraButtons[3].width = board.width * 0.8;
     extraButtons[3].height = buttonHeight;
 
+    extraButtons[4].x = board.x + gap * 2;
+    extraButtons[4].y = board.y + gapY * 6 + buttonHeight * 4;
+    extraButtons[4].width = board.width * 0.35;
+    extraButtons[4].height = buttonHeight * 3;
+
+    extraButtons[5].x = board.x + board.width * 0.35 + gap * 4;
+    extraButtons[5].y = board.y + gapY * 6 + buttonHeight * 4;
+    extraButtons[5].width = board.width * 0.35;
+    extraButtons[5].height = buttonHeight * 3;
+
+    confirmButtons[0].x = canvas.width / 2 - gap * 3 - board.width * 0.35;
+    confirmButtons[0].y = canvas.height * 0.3;
+    confirmButtons[0].width = board.width * 0.35;
+    confirmButtons[0].height = buttonHeight * 3;
+
+    confirmButtons[1].x = canvas.width / 2 + gap * 3;
+    confirmButtons[1].y = canvas.height * 0.3;
+    confirmButtons[1].width = board.width * 0.35;
+    confirmButtons[1].height = buttonHeight * 3;
+
     obstacleLength = board.width * 0.2;
     obstacleLineWidth = 10;
 
@@ -1071,7 +1210,7 @@ const assets = {
     images: [
         themes.delusion.image,
         themes.abyss.image,
-        themes.amber.image,
+        themes.blame.image,
         themes.hacker.image,
     ],
     audio: [
@@ -1099,7 +1238,7 @@ for(let src of assets.images){
 if(savedTheme === "abyss"){
     background = loadedImages[1];
 }
-else if(savedTheme === "amber"){
+else if(savedTheme === "blame"){
     background = loadedImages[2];
 }
 else if(savedTheme === "hacker"){
