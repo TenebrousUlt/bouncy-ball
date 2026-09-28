@@ -452,6 +452,11 @@ function draw(){
             ctx.fillStyle = colors.sub;
             ctx.font = `${fontSize * 1.5}px Germania One`;
             ctx.fillText(button.text,button.x + button.width / 2,button.y + button.height / 2);
+
+            ctx.font = `${fontSize * 2}px Germania One`;
+            ctx.fillText("DO YOU REALLY WANT TO SEE IT?",upperBoard.x + (upperBoard.width / 2), upperBoard.y + (upperBoard.height / 4));
+
+
         }
     }
 }
@@ -920,7 +925,7 @@ canvas.addEventListener("pointerdown", event =>{
             mouseY >= button.y &&
             mouseY <= button.y + button.height
         ){
-            if(customize){
+            if(customize && !confirm){
 
                 switch(button.action){
                 
@@ -965,28 +970,28 @@ canvas.addEventListener("pointerdown", event =>{
         }
         }
 
-        for(let button of confirmButtons){
-            if (
-                mouseX >= button.x &&
-                mouseX <= button.x + button.width &&
-                mouseY >= button.y &&
-                mouseY <= button.y + button.height
-            ){
-                if(confirm){
+        if(confirm){
+            for(let button of confirmButtons){
+                if (
+                    mouseX >= button.x &&
+                    mouseX <= button.x + button.width &&
+                    mouseY >= button.y &&
+                    mouseY <= button.y + button.height
+                ){
+                        switch(button.action){
 
-                    switch(button.action){
+                            case "n":
+                                confirm = false;
+                                break;
 
-                        case "n":
-                            confirm = false;
-                            break;
-
-                        case "y":
-                            confirm = false;
-                            window.open("https://youtu.be/QDia3e12czc", "_blank");
-                            break;
-                    }
+                            case "y":
+                                confirm = false;
+                                window.open("https://youtu.be/QDia3e12czc", "_blank");
+                                break;
+                        }
                 }
             }
+            return;
         }
 
     }
